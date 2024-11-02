@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking-App</title>
+</head>
+<body style="margin: 0">
+
+  <h1>Booking Appointment App</h1>
+  
+  <form onsubmit="handleFormSubmit(event)">
+    <label for="username">Username</label>
+    <input type="text" name="username" id="username" required /><br>
+    <label for="email">Email</label>
+    <input type="email" name="email" id="email" required /><br>
+    <label for="phone">Phone Number</label>
+    <input type="text" name="phone" id="phone" required /><br>
+
+    <button type="submit">Submit</button>
+  </form>
+  <ul></ul>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.5.1/axios.min.js"></script>
+  
+  <script>
+    let currentUserId = null;
+
+    function handleFormSubmit(event) {
+      event.preventDefault();
+
+      const userDetails = {
+          username: event.target.username.value,
+          email: event.target.email.value,
+          phone: event.target.phone.value,
+      };
+
+      // Send post request to save the booking
+      axios
+          .post("http://localhost:3000/users/add-users", userDetails)
+          .then((response) => {
+              // response.data should contain the updated list of users
+              const userList = document.querySelector("ul");
+              userList.innerHTML = ""; // Clear the existing list
+
+              // Display the updated user list
+              response.data.forEach(user => displayUserOnScreen(user)); // Use the updated list
+          })
+          .catch((error) => console.log(error));
+
+      // Clear the form fields
+      document.getElementById("username").value = "";
+      document.getElementById("email").value = "";
+      document.getElementById("phone").value = "";
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      axios
+        .get("http://localhost:3000/users/get-users")
+        .then((response) => {
+          console.log("Response data:", response.data); // Log the response to debug
+          response.data.forEach(user => displayUserOnScreen(user));
+        })
+        .catch((error) => console.log(error));
+    });
+
+    function displayUserOnScreen(userDetails) {
+      const userItem = document.createElement("li");
+      userItem.appendChild(
+        document.createTextNode(`${userDetails.username} - ${userDetails.email} - ${userDetails.phone}`)
+      );
+
+      // Create delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.appendChild(document.createTextNode("Delete"));
+      userItem.appendChild(deleteBtn);
+
+      // Create edit button
+      const editBtn = document.createElement("button");
+      editBtn.appendChild(document.createTextNode("Edit"));
+      userItem.appendChild(editBtn);
+
+      const userList = document.querySelector("ul");
+      userList.appendChild(userItem);
+
+      // Delete functionality
+      deleteBtn.addEventListener("click", function () {
+        axios
+          .post(`http://localhost:3000/users/delete-user/${userDetails.id}`) // Assuming you have a DELETE endpoint for deleting users
+          .then(() => {
+            userList.removeChild(userItem);
+            console.log(`User with ID ${userDetails.id} deleted successfully`);
+          })
+          .catch((error) => console.log(error));
+      });
+
+      // Edit functionality
+      editBtn.addEventListener("click", function () {
+        document.getElementById("username").value = userDetails.username;
+        document.getElementById("email").value = userDetails.email;
+        document.getElementById("phone").value = userDetails.phone;
+
+        currentUserId = userDetails.id; // Assuming userDetails.id is the user's ID
+
+        // Optionally, you can call a delete or edit endpoint here if necessary
+      });
+    }
+  </script>
+</body>
+</html>
